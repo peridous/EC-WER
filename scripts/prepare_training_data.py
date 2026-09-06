@@ -1,4 +1,3 @@
-"""Format binary edit labels and construct matched transcript-failure pairs."""
 from __future__ import annotations
 
 import argparse
@@ -29,7 +28,9 @@ def save_jsonl(path, rows):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description="Format binary edit labels and construct matched transcript-failure pairs."
+    )
     parser.add_argument("--input_dir", type=Path, required=True)
     parser.add_argument("--edit_output_dir", type=Path, required=True)
     parser.add_argument("--direct_output_dir", type=Path, required=True)

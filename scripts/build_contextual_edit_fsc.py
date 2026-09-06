@@ -12,11 +12,6 @@ import fsc_evaluator as helper
 
 
 def align(ref, hyp):
-    """Unit-cost WER alignment; ties prefer diagonal, deletion, insertion.
-
-    Return (op, ref_index, hyp_index, hyp_position) tuples for M/S/D/I.
-    hyp_position is the insertion index for a deletion repair.
-    """
     n, m = len(ref), len(hyp)
 
     dp = [[0] * (m + 1) for _ in range(n + 1)]

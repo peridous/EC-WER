@@ -1,4 +1,3 @@
-"""Score transcript CSVs with continuous binary-change EC-WER and Direct Estimate."""
 from __future__ import annotations
 
 import argparse
@@ -39,7 +38,9 @@ def predict(texts, model_dir, tokenizer_name, positive_label, batch_size, max_le
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description="Score transcript CSVs with continuous binary-change EC-WER and Direct Estimate."
+    )
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output_dir", type=Path, required=True)
     parser.add_argument("--model_dir", type=Path, required=True)
