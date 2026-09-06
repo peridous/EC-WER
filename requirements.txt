@@ -1,0 +1,9 @@
+numpy
+pandas
+torch
+scikit-learn
+datasets
+transformers>=4.46,<5
+accelerate>=0.26
+sentencepiece
+protobuf
