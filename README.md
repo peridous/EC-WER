@@ -59,9 +59,26 @@ and `metrics.json`. Input columns default to `reference` and `hypothesis`;
 column names are configurable. Optional binary `downstream_failure` labels
 produce pooled AUROC/AUPRC for all transcripts and erroneous transcripts.
 Metrics are null when a subset lacks both classes. Omit `--direct_model_dir`
-to score EC-WER alone. The tokenizer defaults to the original DeBERTa base
-tokenizer, matching the inspected corrected evaluation pipeline; specify
-`--tokenizer_name` and `--direct_tokenizer_name` if training with another one.
+to score EC-WER alone. Empty hypotheses remain empty strings.
+
+EC-WER preserves the training DeBERTa Metaspace tokenizer with
+`fix_mistral_regex=False`. It loads tokenizer files from the checkpoint,
+then `--tokenizer_path` if the checkpoint lacks them, then the base model
+named by `--tokenizer_name`. The same behavior applies to every dataset.
+Direct Estimate retains its separate `--direct_tokenizer_name` setting.
+
+The tested tokenizer environment is `transformers==4.57.6` and
+`tokenizers==0.22.2`, pinned in `requirements.txt`. EC-WER rejects other
+versions and checks a token-ID fingerprint for three synthetic edit inputs
+before inference. To run that check without loading model weights:
+
+```bash
+python -c "import sys; sys.path.insert(0, 'scripts'); from evaluate_ecwer import load_ecwer_tokenizer; load_ecwer_tokenizer('models/ecwer/best_model'); print('Token-ID check passed')"
+ECWER_TOKENIZER_PATH=models/ecwer/best_model python -m unittest discover -s tests
+```
+
+Before changing these version pins, verify the token-ID check and all
+3,626 validation encodings against the training tokenizer.
 
 FSC, SLURP, and SLUE-VoxPopuli are not redistributed. See
 [data/README.md](data/README.md) for input requirements and dataset scope.
@@ -71,11 +88,15 @@ transfer-task evaluators, and experiment environment.
 
 ## Release provenance and verification
 
-The released scripts were validated through compilation, artifact comparisons, and fixed-probability scoring checks; full end-to-end retraining and checkpoint inference were not rerun for this release.
+Verification includes exact supervision and training-data comparisons,
+full retraining of both students, and checkpoint inference in an isolated
+Python 3.12.3 environment. The EC-WER scorer matches all 3,626 original
+validation token-ID sequences. Retraining comparisons allow numerical
+variation; they do not establish bit-for-bit model equality.
 
 [RELEASE_NOTES.md](RELEASE_NOTES.md) documents script provenance and validation.
-Dependency ranges are inferred from the code; the original environment
-lockfile is not included.
+Tokenizer-library versions are pinned and checked at runtime. Other
+dependencies are not a complete environment lockfile.
 
 ## Paper
 

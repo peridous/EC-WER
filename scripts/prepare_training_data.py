@@ -74,7 +74,8 @@ def main():
                 raise ValueError("Conflicting teacher predictions for a transcript pair")
             pairs[key] = pair
         save_jsonl(args.edit_output_dir / f"{split}.jsonl", edits)
-        save_jsonl(args.direct_output_dir / f"{split}.jsonl", pairs.values())
+        save_jsonl(args.direct_output_dir / f"{split}.jsonl",
+                   [pairs[key] for key in sorted(pairs)])
         print(f"{split}: {len(edits)} edits; {len(pairs)} Direct Estimate pairs")
 
 

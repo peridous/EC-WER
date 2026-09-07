@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
+from importlib.metadata import version
 
 import numpy as np
 import pandas as pd
@@ -15,9 +17,30 @@ from fsc_evaluator import normalize_tokens
 from prepare_training_data import build_input_text
 
 
+def load_ecwer_tokenizer(source):
+    for package, expected in (("transformers", "4.57.6"), ("tokenizers", "0.22.2")):
+        if version(package) != expected:
+            raise RuntimeError(f"EC-WER requires {package}=={expected}; install requirements.txt")
+    tokenizer = AutoTokenizer.from_pretrained(source, use_fast=True, fix_mistral_regex=False)
+    texts = [
+        "[REFERENCE] turn on the light [HYPOTHESIS] turn off the light "
+        "[EDIT_TYPE] substitution [REFERENCE_EDIT] on [HYPOTHESIS_EDIT] off",
+        "[REFERENCE] hello world [HYPOTHESIS] hello [EDIT_TYPE] deletion "
+        "[REFERENCE_EDIT] world [HYPOTHESIS_EDIT] [EMPTY]",
+        "[REFERENCE] hello [HYPOTHESIS] hello there [EDIT_TYPE] insertion "
+        "[REFERENCE_EDIT] [EMPTY] [HYPOTHESIS_EDIT] there",
+    ]
+    ids = tokenizer(texts, truncation=True, max_length=128)["input_ids"]
+    fingerprint = hashlib.sha256(json.dumps(ids, separators=(",", ":")).encode()).hexdigest()
+    if fingerprint != "9487d4a3eb8a9a4933820451f19a44faa66b5c03a8c1d307f099c81ce6e71f5f":
+        raise RuntimeError("EC-WER tokenizer does not match the training token IDs")
+    return tokenizer
+
+
 def predict(texts, model_dir, tokenizer_name, positive_label, batch_size, max_length,
-            hypotheses=None):
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=True)
+            hypotheses=None, tokenizer=None):
+    if tokenizer is None:
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name, use_fast=True)
     model = AutoModelForSequenceClassification.from_pretrained(model_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device).eval()
@@ -46,6 +69,8 @@ def main():
     parser.add_argument("--model_dir", type=Path, required=True)
     parser.add_argument("--direct_model_dir", type=Path)
     parser.add_argument("--tokenizer_name", default="microsoft/deberta-v3-small")
+    parser.add_argument("--tokenizer_path", type=Path,
+                        help="EC-WER tokenizer directory when the checkpoint has no tokenizer files.")
     parser.add_argument("--direct_tokenizer_name", default="microsoft/deberta-v3-small")
     parser.add_argument("--reference_col", default="reference")
     parser.add_argument("--hypothesis_col", default="hypothesis")
@@ -79,8 +104,15 @@ def main():
             records.append({"row_position": index, "operation": names[op],
                             "reference_index": ri, "hypothesis_index": hi,
                             "repair_position": pos})
-    probabilities = predict(texts, args.model_dir, args.tokenizer_name, "CONSEQUENTIAL",
-                            args.batch_size, args.max_length) if texts else np.array([])
+    tokenizer_files = ("tokenizer.json", "spm.model", "sentencepiece.bpe.model", "vocab.json", "vocab.txt")
+    tokenizer_source = (
+        args.model_dir if any((args.model_dir / name).is_file() for name in tokenizer_files)
+        else args.tokenizer_path or args.tokenizer_name
+    )
+    print(f"EC-WER tokenizer: {tokenizer_source}")
+    tokenizer = load_ecwer_tokenizer(tokenizer_source)
+    probabilities = predict(texts, args.model_dir, tokenizer_source, "CONSEQUENTIAL",
+                            args.batch_size, args.max_length, tokenizer=tokenizer) if texts else np.array([])
     sums = np.zeros(len(frame), dtype=float)
     np.add.at(sums, np.asarray(owners, dtype=int), probabilities)
     frame["wer"] = np.asarray(counts) / np.asarray(denominators)
