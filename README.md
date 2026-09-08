@@ -57,6 +57,12 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python -m unittest discover -s tests -v
 FSC, SLURP, and SLUE-VoxPopuli are not redistributed. See
 [data/README.md](data/README.md) for input requirements and dataset scope.
 
+## Results
+
+Across seven downstream-failure targets, Direct Estimate achieves higher
+AUPRC on four targets, while EC-WER achieves higher AUPRC on three and
+additionally provides attribution to individual ASR edits.
+
 ## Paper
 
 Paper link coming soon.
