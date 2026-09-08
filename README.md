@@ -23,18 +23,6 @@ q_hat_e = P(q_chg = 1 | R, H, e)
 EC-WER = sum_e(q_hat_e) / N
 ```
 
-N is the number of normalized reference words. A DeBERTa-v3-small sequence
-classifier predicts continuous positive-class probabilities. Matches do
-not contribute. Scoring uses deterministic unit-cost alignment, with ties
-resolved by diagonal, deletion, then insertion. Empty normalized references
-are rejected; empty hypotheses are supported.
-
-Direct Estimate uses the same reference/hypothesis pairs and predicts
-transcript-level downstream failure with native sentence-pair encoding.
-Its label compares the teacher frame for H with the teacher frame for R.
-The FSC builder retains only commands whose reference prediction matches
-the gold frame, so this comparison represents teacher failure on H.
-
 ## Reproduction
 
 Use Python 3.10 or newer in a virtual environment:
@@ -54,19 +42,6 @@ the inspected EC run: 80 training and 40 validation corruptions per command,
 rate 2e-5, and maximum input length 128. Both students use inverse-frequency
 class-weighted cross-entropy and select the checkpoint by validation AUPRC.
 
-The scorer writes `scored.csv`, per-edit probabilities in `edit_scores.csv`,
-and `metrics.json`. Input columns default to `reference` and `hypothesis`;
-column names are configurable. Optional binary `downstream_failure` labels
-produce pooled AUROC/AUPRC for all transcripts and erroneous transcripts.
-Metrics are null when a subset lacks both classes. Omit `--direct_model_dir`
-to score EC-WER alone. Empty hypotheses remain empty strings.
-
-EC-WER preserves the training DeBERTa Metaspace tokenizer with
-`fix_mistral_regex=False` explicitly in both training and scoring. Scoring loads tokenizer files from the checkpoint,
-then `--tokenizer_path` if the checkpoint lacks them, then the base model
-named by `--tokenizer_name`. The same behavior applies to every dataset.
-Direct Estimate retains its separate `--direct_tokenizer_name` setting.
-
 The tested tokenizer environment is `transformers==4.57.6` and
 `tokenizers==0.22.2`, pinned in `requirements.txt`. EC-WER rejects other
 versions and checks a token-ID fingerprint for three synthetic edit inputs
@@ -77,14 +52,6 @@ python -c "import sys; sys.path.insert(0, 'scripts'); from evaluate_ecwer import
 ECWER_TOKENIZER_PATH=models/ecwer/best_model python -m unittest discover -s tests
 ```
 
-Before changing these version pins, verify the token-ID check and all
-3,626 validation encodings against the training tokenizer.
-
-For the full regression, use the original training checkpoint's unmodified
-`tokenizer.json` as an independent reference and the original validation JSONL.
-Run in separate processes so offline settings take effect before imports
-(the following commands use Bash syntax):
-
 ```bash
 export ECWER_VALID_JSONL=/path/to/original/valid.jsonl
 export ECWER_ORIGINAL_TOKENIZER_JSON=/path/to/original/checkpoint/tokenizer.json
@@ -93,31 +60,8 @@ HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 python -m unittest discover -s tests -v
 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python -m unittest discover -s tests -v
 ```
 
-The online run must populate the model cache before the offline run. Each
-mode must report **3,626 / 3,626 validation encodings match; 0 mismatches**.
-Without the two artifact variables, the full-validation test is explicitly
-skipped; synthetic fingerprint tests alone do not establish full agreement.
-The clean-room audit found that `True` preserved Metaspace online but changed
-all 3,626 encodings offline. `False` preserves training-consistent behavior
-in both modes. Direct Estimate tokenizer behavior is unchanged.
-
 FSC, SLURP, and SLUE-VoxPopuli are not redistributed. See
 [data/README.md](data/README.md) for input requirements and dataset scope.
-Models, generated datasets, ASR outputs, and evaluation results are excluded
-from the release. Reproducing the paper tables requires the original ASR outputs,
-transfer-task evaluators, and experiment environment.
-
-## Release provenance and verification
-
-Verification includes exact supervision and training-data comparisons,
-full retraining of both students, and checkpoint inference in an isolated
-Python 3.12.3 environment. The EC-WER scorer matches all 3,626 original
-validation token-ID sequences. Retraining comparisons allow numerical
-variation; they do not establish bit-for-bit model equality.
-
-[RELEASE_NOTES.md](RELEASE_NOTES.md) documents script provenance and validation.
-Tokenizer-library versions are pinned and checked at runtime. Other
-dependencies are not a complete environment lockfile.
 
 ## Paper
 
