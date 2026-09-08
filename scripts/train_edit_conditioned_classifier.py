@@ -317,7 +317,7 @@ def main() -> None:
     tokenizer = AutoTokenizer.from_pretrained(
         args.model_name,
         use_fast=True,
-        fix_mistral_regex=True,
+        fix_mistral_regex=False,
     )
 
     model = (

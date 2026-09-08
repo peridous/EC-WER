@@ -62,7 +62,7 @@ Metrics are null when a subset lacks both classes. Omit `--direct_model_dir`
 to score EC-WER alone. Empty hypotheses remain empty strings.
 
 EC-WER preserves the training DeBERTa Metaspace tokenizer with
-`fix_mistral_regex=False`. It loads tokenizer files from the checkpoint,
+`fix_mistral_regex=False` explicitly in both training and scoring. Scoring loads tokenizer files from the checkpoint,
 then `--tokenizer_path` if the checkpoint lacks them, then the base model
 named by `--tokenizer_name`. The same behavior applies to every dataset.
 Direct Estimate retains its separate `--direct_tokenizer_name` setting.
@@ -79,6 +79,27 @@ ECWER_TOKENIZER_PATH=models/ecwer/best_model python -m unittest discover -s test
 
 Before changing these version pins, verify the token-ID check and all
 3,626 validation encodings against the training tokenizer.
+
+For the full regression, use the original training checkpoint's unmodified
+`tokenizer.json` as an independent reference and the original validation JSONL.
+Run in separate processes so offline settings take effect before imports
+(the following commands use Bash syntax):
+
+```bash
+export ECWER_VALID_JSONL=/path/to/original/valid.jsonl
+export ECWER_ORIGINAL_TOKENIZER_JSON=/path/to/original/checkpoint/tokenizer.json
+export ECWER_TOKENIZER_PATH=microsoft/deberta-v3-small
+HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 python -m unittest discover -s tests -v
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python -m unittest discover -s tests -v
+```
+
+The online run must populate the model cache before the offline run. Each
+mode must report **3,626 / 3,626 validation encodings match; 0 mismatches**.
+Without the two artifact variables, the full-validation test is explicitly
+skipped; synthetic fingerprint tests alone do not establish full agreement.
+The clean-room audit found that `True` preserved Metaspace online but changed
+all 3,626 encodings offline. `False` preserves training-consistent behavior
+in both modes. Direct Estimate tokenizer behavior is unchanged.
 
 FSC, SLURP, and SLUE-VoxPopuli are not redistributed. See
 [data/README.md](data/README.md) for input requirements and dataset scope.
