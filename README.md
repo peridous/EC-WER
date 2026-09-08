@@ -36,12 +36,6 @@ python scripts/train_direct_failure_pair.py --train_jsonl data/direct_training/t
 python scripts/evaluate_ecwer.py --input /path/to/evaluation.csv --model_dir models/ecwer/best_model --direct_model_dir models/direct/best_model --output_dir results/evaluation
 ```
 
-Keep the same FSC CSV and seed for both preparation steps. Defaults match
-the inspected EC run: 80 training and 40 validation corruptions per command,
-20% command-level validation split, four epochs, batch size 16, learning
-rate 2e-5, and maximum input length 128. Both students use inverse-frequency
-class-weighted cross-entropy and select the checkpoint by validation AUPRC.
-
 The tested tokenizer environment is `transformers==4.57.6` and
 `tokenizers==0.22.2`, pinned in `requirements.txt`. EC-WER rejects other
 versions and checks a token-ID fingerprint for three synthetic edit inputs
