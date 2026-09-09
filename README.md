@@ -39,6 +39,12 @@ python scripts/evaluate_ecwer.py --input /path/to/evaluation.csv --model_dir mod
 FSC, SLURP, and SLUE-VoxPopuli are not redistributed. See
 [data/README.md](data/README.md) for input requirements and dataset scope.
 
+# Datasets
+
+FSC (Fluent Speech Commands), SLURP, and SLUE-VoxPopuli are not
+redistributed in this repository. Obtain each dataset from its official
+distributor and follow its license and access conditions.
+
 ## Results
 
 Across seven downstream-failure targets, Direct Estimate achieves higher
