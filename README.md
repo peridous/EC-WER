@@ -36,9 +36,6 @@ python scripts/train_direct_failure_pair.py --train_jsonl data/direct_training/t
 python scripts/evaluate_ecwer.py --input /path/to/evaluation.csv --model_dir models/ecwer/best_model --direct_model_dir models/direct/best_model --output_dir results/evaluation
 ```
 
-FSC, SLURP, and SLUE-VoxPopuli are not redistributed. See
-[data/README.md](data/README.md) for input requirements and dataset scope.
-
 # Datasets
 
 FSC (Fluent Speech Commands), SLURP, and SLUE-VoxPopuli are not
