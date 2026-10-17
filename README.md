@@ -4,12 +4,18 @@ Official implementation of **“Consequence Distillation for Transferable Automa
 
 **Michael Wang** and **Seong Jong Yoo**
 
+**[Paper (PDF)](./EC-WER.pdf)** | **[Code](https://github.com/peridous/EC-WER)**
+
 ## Overview
 
-The release includes two models:
+Traditional Word Error Rate (WER) treats all speech recognition errors equally, regardless of their consequences. However, a single incorrect word can completely change the meaning of a command, while several other errors might have little impact.
+
+This repository implements two approaches for evaluating ASR errors based on their downstream consequences:
 
 * **Direct Estimate:** transcript-level prediction of downstream task failure.
 * **EC-WER:** edit-level consequence prediction for WER-aligned substitutions, deletions, and insertions.
+
+Unlike conventional WER, EC-WER distinguishes between errors based on their predicted impact on downstream tasks.
 
 ## Binary edit-change EC-WER
 
@@ -47,7 +53,3 @@ distributor and follow its license and access conditions.
 Across seven downstream-failure targets, Direct Estimate achieves higher
 AUPRC on four targets, while EC-WER achieves higher AUPRC on three and
 additionally provides attribution to individual ASR edits.
-
-## Paper
-
-Paper link coming soon.
